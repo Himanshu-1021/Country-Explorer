@@ -7,115 +7,341 @@
 
 body {
     font-family: Arial, sans-serif;
-    background: #f4f6f9;
-    color: #222;
+    background: #101116;
+    color: #ffffff;
 }
 
-header {
-    background: #ffffff;
-    text-align: center;
-    padding: 30px;
-    box-shadow: 0 2px 8px #ddd;
-}
+/* Navbar */
 
-header h1 {
-    margin-bottom: 10px;
-    color: #263b58;
-}
-
-main {
-    max-width: 1100px;
-    margin: 30px auto;
-    padding: 15px;
-}
-
-.controls {
+.navbar {
     display: flex;
-    gap: 15px;
-    margin-bottom: 25px;
+    justify-content: space-between;
+    align-items: center;
+    padding: 22px 8%;
+    background: #181920;
+    border-bottom: 1px solid #292a32;
+}
+
+.logo {
+    color: #ffffff;
+    font-size: 25px;
+    font-weight: bold;
+    text-decoration: none;
+    letter-spacing: 1px;
+}
+
+.logo span {
+    color: #ff9f43;
+}
+
+.navbar p {
+    color: #aaa;
+    font-size: 14px;
+}
+
+/* Main Container */
+
+.container {
+    width: 85%;
+    max-width: 1250px;
+    margin: auto;
+}
+
+/* Hero */
+
+.hero {
+    text-align: center;
+    padding: 65px 15px 45px;
+}
+
+.hero h1 {
+    font-size: 38px;
+    margin-bottom: 15px;
+}
+
+.hero p {
+    color: #aaa;
+    font-size: 16px;
+}
+
+/* Search */
+
+.search-section {
+    max-width: 750px;
+    margin: 0 auto 45px;
+}
+
+.search-box {
+    display: flex;
+    gap: 10px;
+}
+
+.search-box input {
+    flex: 1;
+    min-width: 0;
 }
 
 input, select {
-    padding: 12px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    font-size: 15px;
+    background: #20212a;
+    border: 1px solid #383944;
+    color: white;
+    padding: 14px;
+    border-radius: 7px;
+    font-size: 14px;
+    outline: none;
 }
 
-input {
+input:focus, select:focus {
+    border-color: #ff9f43;
+}
+
+input::placeholder {
+    color: #888;
+}
+
+button {
+    cursor: pointer;
+    border: none;
+    border-radius: 7px;
+    font-weight: bold;
+}
+
+.search-box button {
+    background: #ff9f43;
+    color: #171717;
+    padding: 14px 25px;
+}
+
+.search-box button:hover {
+    background: #ffb66d;
+}
+
+.filters {
+    display: flex;
+    gap: 12px;
+    margin-top: 15px;
+}
+
+.filters select,
+.filters input {
     flex: 1;
+    min-width: 0;
 }
 
-select {
-    width: 180px;
-    background: white;
+#clearBtn {
+    background: #30313a;
+    color: white;
+    padding: 12px 18px;
 }
 
-.countries {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 20px;
+#clearBtn:hover {
+    background: #444550;
 }
 
-.card {
-    background: white;
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px #ddd;
-    transition: transform 0.2s;
+/* Results */
+
+.section-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
 }
 
-.card:hover {
-    transform: translateY(-5px);
+.section-heading h2 {
+    font-size: 24px;
 }
 
-.card img {
-    width: 100%;
-    height: 140px;
-    object-fit: cover;
-}
-
-.card-info {
-    padding: 15px;
-}
-
-.card-info h3 {
-    margin-bottom: 12px;
-    color: #263b58;
-}
-
-.card-info p {
-    margin: 7px 0;
+#resultCount {
+    color: #ff9f43;
     font-size: 14px;
 }
 
 #status {
     text-align: center;
-    margin: 20px;
-    color: #555;
+    color: #ffad62;
+    margin: 25px 0;
 }
 
-button {
-    display: block;
-    margin: 20px auto;
-    padding: 12px 25px;
-    background: #263b58;
-    color: white;
-    border: none;
-    border-radius: 6px;
+/* Movie Cards */
+
+.movie-grid {
+    display: grid;
+    grid-template-columns: repeat(
+        auto-fill,
+        minmax(190px, 1fr)
+    );
+    gap: 25px;
+}
+
+.movie-card {
+    background: #1c1d25;
+    border-radius: 10px;
+    overflow: hidden;
+    transition: transform 0.25s, box-shadow 0.25s;
     cursor: pointer;
 }
 
-button:hover {
-    background: #405c80;
+.movie-card:hover {
+    transform: translateY(-7px);
+    box-shadow: 0 8px 25px #00000080;
 }
 
-@media (max-width: 600px) {
-    .controls {
+.movie-card img {
+    width: 100%;
+    height: 280px;
+    object-fit: cover;
+    display: block;
+}
+
+.movie-info {
+    padding: 15px;
+}
+
+.movie-info h3 {
+    font-size: 16px;
+    margin-bottom: 10px;
+}
+
+.movie-info p {
+    color: #aaa;
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+.movie-info button {
+    width: 100%;
+    background: #ff9f43;
+    padding: 10px;
+    margin-top: 8px;
+    color: #171717;
+}
+
+.movie-info button:hover {
+    background: #ffb66d;
+}
+
+/* Load More */
+
+.load-more {
+    display: block;
+    margin: 35px auto;
+    padding: 13px 30px;
+    background: #ff9f43;
+    color: #171717;
+}
+
+/* Modal */
+
+.modal {
+    position: fixed;
+    inset: 0;
+    background: #000000d9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 10;
+}
+
+.modal-content {
+    background: #20212a;
+    width: 100%;
+    max-width: 650px;
+    max-height: 85vh;
+    overflow-y: auto;
+    padding: 30px;
+    border-radius: 12px;
+    position: relative;
+}
+
+.close-btn {
+    position: absolute;
+    right: 15px;
+    top: 10px;
+    font-size: 30px;
+    background: transparent;
+    color: white;
+}
+
+.modal-details {
+    display: flex;
+    gap: 25px;
+    margin-top: 20px;
+}
+
+.modal-details img {
+    width: 170px;
+    max-height: 250px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.modal-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.modal-text h2 {
+    color: #ff9f43;
+    margin-bottom: 15px;
+}
+
+.modal-text p {
+    color: #ccc;
+    line-height: 1.6;
+    margin-bottom: 10px;
+}
+
+/* Footer */
+
+footer {
+    text-align: center;
+    padding: 25px;
+    color: #777;
+    margin-top: 60px;
+    border-top: 1px solid #292a32;
+}
+
+/* Responsive Design */
+
+@media(max-width: 650px) {
+
+    .navbar {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .container {
+        width: 92%;
+    }
+
+    .hero h1 {
+        font-size: 27px;
+    }
+
+    .filters {
+        flex-wrap: wrap;
+    }
+
+    .filters select,
+    .filters input {
+        flex-basis: 40%;
+    }
+
+    .movie-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .movie-card img {
+        height: 210px;
+    }
+
+    .modal-details {
         flex-direction: column;
     }
 
-    select {
-        width: 100%;
+    .modal-details img {
+        width: 130px;
     }
 }
