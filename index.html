@@ -4,102 +4,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Movie Explorer</title>
+    <title>Show Explorer</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <header class="navbar">
-        <a href="#" class="logo">CINE<span>FINDER</span></a>
-        <p>Discover your next favourite movie</p>
+    <header class="header">
+        <div class="logo">Show<span>Explorer</span></div>
+        <p>Discover your next favourite TV show</p>
     </header>
 
     <main class="container">
 
-        <section class="hero">
-            <h1>Explore the World of Cinema</h1>
-            <p>Search thousands of movies and discover something amazing.</p>
-        </section>
-
         <section class="search-section">
+            <h1>Explore TV Shows</h1>
+            <p>Search thousands of TV shows and discover something new.</p>
 
-            <form id="searchForm">
-
-                <div class="search-box">
-                    <input
-                        type="text"
-                        id="movieInput"
-                        placeholder="Search movies..."
-                        required
-                    >
-                    <button type="submit">Search</button>
-                </div>
-
-                <div class="filters">
-
-                    <select id="typeFilter">
-                        <option value="all">All Genres</option>
-                        <option value="Drama">Drama</option>
-                        <option value="Comedy">Comedy</option>
-                        <option value="Action">Action</option>
-                        <option value="Crime">Crime</option>
-                        <option value="Adventure">Adventure</option>
-                        <option value="Science-Fiction">Science Fiction</option>
-                        <option value="Anime">Anime</option>
-                        <option value="Thriller">Thriller</option>
-                    </select>
-
-                    <input
-                        type="number"
-                        id="yearFilter"
-                        placeholder="Release year"
-                        min="1888"
-                        max="2100"
-                    >
-
-                    <button type="button" id="clearBtn">
-                        Clear Filters
-                    </button>
-
-                </div>
-
+            <form id="searchForm" class="search-form">
+                <input
+                    type="text"
+                    id="searchInput"
+                    placeholder="Search for a show..."
+                    autocomplete="off"
+                    required
+                >
+                <button type="submit">Search</button>
             </form>
 
-        </section>
+            <div class="filters">
+                <select id="genreFilter">
+                    <option value="">All Genres</option>
+                    <option value="Drama">Drama</option>
+                    <option value="Comedy">Comedy</option>
+                    <option value="Action">Action</option>
+                    <option value="Crime">Crime</option>
+                    <option value="Adventure">Adventure</option>
+                    <option value="Science-Fiction">Science-Fiction</option>
+                    <option value="Thriller">Thriller</option>
+                    <option value="Romance">Romance</option>
+                    <option value="Fantasy">Fantasy</option>
+                    <option value="Anime">Anime</option>
+                </select>
 
-        <section class="results-section">
+                <input
+                    type="number"
+                    id="yearFilter"
+                    placeholder="Year (e.g. 2020)"
+                    min="1900"
+                    max="2100"
+                >
 
-            <div class="section-heading">
-                <h2>Discover Titles</h2>
-                <span id="resultCount"></span>
+                <button type="button" id="clearBtn" class="clear-btn">
+                    Clear Filters
+                </button>
             </div>
-
-            <p id="status"></p>
-
-            <div id="movieContainer" class="movie-grid"></div>
-
-            <button id="loadMoreBtn" class="load-more" hidden>
-                Load More
-            </button>
-
         </section>
+
+        <div id="status" class="status">
+            Search for a TV show to get started.
+        </div>
+
+        <div id="resultCount" class="result-count"></div>
+
+        <section id="showContainer" class="show-grid"></section>
 
     </main>
 
-    <!-- Movie Details Modal -->
+    <!-- Details Popup -->
+    <div id="showModal" class="modal" hidden>
+        <div class="modal-content" role="dialog" aria-modal="true"
+             aria-labelledby="modalTitle">
 
-<div class="modal" id="movieModal" hidden>
-    <div class="modal-content">
-        <button id="closeModal">×</button>
-        <div id="modalBody"></div>
+            <button type="button" id="closeModal"
+                    class="close-btn" aria-label="Close">&times;</button>
+
+            <div id="modalBody"></div>
+
+        </div>
     </div>
-</div>
 
     <footer>
-        <p>© 2026 CineFinder | Powered by OMDb API</p>
+        <p>Show Explorer | Powered by TVmaze API</p>
     </footer>
 
     <script src="script.js"></script>
-
 </body>
 </html>
