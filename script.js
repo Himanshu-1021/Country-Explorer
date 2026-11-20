@@ -1,128 +1,305 @@
 
-const countriesContainer = document.getElementById("countries");
-const searchInput = document.getElementById("search");
-const regionSelect = document.getElementById("region");
+// API configuration
+const API_KEY = "YOUR_OMDB_API_KEY";
+const API_URL = "https://www.omdbapi.com/";
+
+// Get HTML elements
+const searchForm = document.getElementById("searchForm");
+const movieInput = document.getElementById("movieInput");
+const typeFilter = document.getElementById("typeFilter");
+const yearFilter = document.getElementById("yearFilter");
+const clearBtn = document.getElementById("clearBtn");
+const movieContainer = document.getElementById("movieContainer");
 const statusText = document.getElementById("status");
-const retryButton = document.getElementById("retry");
+const resultCount = document.getElementById("resultCount");
+const loadMoreBtn = document.getElementById("loadMoreBtn");
+const movieModal = document.getElementById("movieModal");
+const modalBody = document.getElementById("modalBody");
+const closeModal = document.getElementById("closeModal");
 
-let countries = [];
+// Store search information
+let currentPage = 1;
+let currentSearch = "";
+let totalResults = 0;
+let isLoading = false;
 
-// Fetch countries from World Bank API
-async function getCountries() {
+// Search movies
+async function searchMovies(page = 1) {
 
-    statusText.textContent = "Loading countries...";
-    countriesContainer.innerHTML = "";
-    retryButton.hidden = true;
+    const searchTerm = movieInput.value.trim();
+
+    if (!searchTerm) {
+        showMessage("Please enter a movie name.");
+        return;
+    }
+
+    if (isLoading) return;
+
+    // Reset results for a new search
+    if (page === 1) {
+        currentSearch = searchTerm;
+        currentPage = 1;
+        movieContainer.innerHTML = "";
+        resultCount.textContent = "";
+    }
+
+    isLoading = true;
+    loadMoreBtn.hidden = true;
+    statusText.textContent = "Searching movies...";
 
     try {
 
-        const response = await fetch(
-            "https://api.worldbank.org/v2/country?format=json&per_page=500"
-        );
+        let url = `${API_URL}?apikey=${API_KEY}&s=${encodeURIComponent(currentSearch)}&page=${page}`;
+
+        // Apply type filter
+        if (typeFilter.value !== "all") {
+            url += `&type=${typeFilter.value}`;
+        }
+
+        // Apply year filter
+        if (yearFilter.value) {
+            url += `&y=${yearFilter.value}`;
+        }
+
+        // Fetch API data
+        const response = await fetch(url);
 
         if (!response.ok) {
-            throw new Error("Failed to fetch countries");
+            throw new Error("Network error. Please try again.");
         }
 
         const data = await response.json();
 
-        if (!data || !Array.isArray(data[1])) {
-            throw new Error("Invalid API response");
+        // Check API response
+        if (data.Response === "False") {
+
+            if (page === 1) {
+                movieContainer.innerHTML = "";
+                showMessage(data.Error || "No movies found.");
+                resultCount.textContent = "";
+            }
+
+            loadMoreBtn.hidden = true;
+            return;
         }
 
-        // Remove regional and income-level aggregates
-        countries = data[1].filter(country =>
-            country.region.id !== "" &&
-            country.capitalCity !== ""
-        );
+        // Store total results
+        totalResults = Number(data.totalResults);
 
-        countries.sort((a, b) =>
-            a.name.localeCompare(b.name)
-        );
+        // Display movies
+        displayMovies(data.Search);
 
-        showCountries();
+        currentPage = page;
+
+        const shown = movieContainer.children.length;
+
+        resultCount.textContent =
+            `${shown} of ${totalResults} results`;
+
+        statusText.textContent = "";
+
+        // Show load more button if results remain
+        loadMoreBtn.hidden =
+            shown >= totalResults || page >= 10;
 
     } catch (error) {
 
-        statusText.textContent =
-            "Unable to load countries. Please try again.";
+        showMessage(error.message);
+        console.error("API Error:", error);
 
-        retryButton.hidden = false;
+    } finally {
+
+        isLoading = false;
+
+    }
+}
+
+// Display movie cards
+function displayMovies(movies) {
+
+    movies.forEach(movie => {
+
+        const card = document.createElement("div");
+        card.className = "movie-card";
+
+        const poster = document.createElement("img");
+
+        poster.src = movie.Poster !== "N/A"
+            ? movie.Poster
+            : "https://placehold.co/300x450/20212a/ffffff?text=No+Poster";
+
+        poster.alt = movie.Title + " poster";
+        poster.loading = "lazy";
+
+        const info = document.createElement("div");
+        info.className = "movie-info";
+
+        const title = document.createElement("h3");
+        title.textContent = movie.Title;
+
+        const year = document.createElement("p");
+        year.textContent = "Year: " + movie.Year;
+
+        const type = document.createElement("p");
+        type.textContent = "Type: " + movie.Type;
+
+        const button = document.createElement("button");
+        button.textContent = "View Details";
+
+        button.addEventListener("click", () => {
+            getMovieDetails(movie.imdbID);
+        });
+
+        info.append(title, year, type, button);
+        card.append(poster, info);
+
+        movieContainer.appendChild(card);
+
+    });
+
+}
+
+// Fetch individual movie details
+async function getMovieDetails(id) {
+
+    movieModal.hidden = false;
+    modalBody.textContent = "Loading movie details...";
+
+    try {
+
+        const url =
+            `${API_URL}?apikey=${API_KEY}&i=${encodeURIComponent(id)}&plot=full`;
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            throw new Error("Unable to load movie details.");
+        }
+
+        const movie = await response.json();
+
+        if (movie.Response === "False") {
+            throw new Error(movie.Error);
+        }
+
+        // Create modal content safely
+        const details = document.createElement("div");
+        details.className = "modal-details";
+
+        const poster = document.createElement("img");
+
+        poster.src = movie.Poster !== "N/A"
+            ? movie.Poster
+            : "https://placehold.co/300x450/20212a/ffffff?text=No+Poster";
+
+        poster.alt = movie.Title + " poster";
+
+        const text = document.createElement("div");
+        text.className = "modal-text";
+
+        const heading = document.createElement("h2");
+        heading.textContent = movie.Title;
+
+        const fields = [
+            "Year: " + movie.Year,
+            "Genre: " + movie.Genre,
+            "Director: " + movie.Director,
+            "Actors: " + movie.Actors,
+            "IMDb Rating: " + movie.imdbRating,
+            "Runtime: " + movie.Runtime,
+            "Plot: " + movie.Plot
+        ];
+
+        text.appendChild(heading);
+
+        fields.forEach(item => {
+            const p = document.createElement("p");
+            p.textContent = item;
+            text.appendChild(p);
+        });
+
+        details.append(poster, text);
+
+        modalBody.replaceChildren(details);
+
+    } catch (error) {
+
+        modalBody.textContent =
+            "Could not load details: " + error.message;
+
         console.error(error);
 
     }
 }
 
-// Display countries
-function showCountries() {
+// Show messages
+function showMessage(message) {
 
-    const searchValue = searchInput.value.toLowerCase();
-    const selectedRegion = regionSelect.value;
-
-    const filteredCountries = countries.filter(country => {
-
-        const matchesSearch =
-            country.name.toLowerCase().includes(searchValue);
-
-        const region = country.region.value;
-
-        const matchesRegion =
-            selectedRegion === "All" ||
-            region.toLowerCase().includes(
-                selectedRegion.toLowerCase()
-            );
-
-        return matchesSearch && matchesRegion;
-    });
-
-    countriesContainer.innerHTML = "";
-
-    statusText.textContent =
-        filteredCountries.length + " countries found";
-
-    if (filteredCountries.length === 0) {
-        statusText.textContent = "No countries found!";
-        return;
-    }
-
-    filteredCountries.forEach(country => {
-
-        const card = document.createElement("div");
-        card.className = "card";
-
-        const flag = country.iso2Code
-            ? `https://flagcdn.com/w320/${country.iso2Code.toLowerCase()}.png`
-            : "";
-
-        card.innerHTML = `
-            <img src="${flag}" alt="Country flag">
-
-            <div class="card-info">
-                <h3>${country.name}</h3>
-
-                <p><b>Capital:</b>
-                ${country.capitalCity || "Not available"}</p>
-
-                <p><b>Region:</b>
-                ${country.region.value}</p>
-
-                <p><b>Country Code:</b>
-                ${country.id}</p>
-            </div>
-        `;
-
-        countriesContainer.appendChild(card);
-    });
+    statusText.textContent = message;
 }
 
-// Search countries
-searchInput.addEventListener("input", showCountries);
+// Search form event
+searchForm.addEventListener("submit", function(event) {
 
-// Filter countries
-regionSelect.addEventListener("change", showCountries);
+    event.preventDefault();
+    searchMovies(1);
 
-// Retry API request
-retryButton.addEventListener("click", getCountries);
+});
 
-// Start application
-getCountries();
+// Change filters and search again
+typeFilter.addEventListener("change", () => {
+    if (movieInput.value.trim()) {
+        searchMovies(1);
+    }
+});
+
+yearFilter.addEventListener("change", () => {
+    if (movieInput.value.trim()) {
+        searchMovies(1);
+    }
+});
+
+// Clear filters
+clearBtn.addEventListener("click", () => {
+
+    typeFilter.value = "movie";
+    yearFilter.value = "";
+
+    if (movieInput.value.trim()) {
+        searchMovies(1);
+    } else {
+        movieContainer.innerHTML = "";
+        resultCount.textContent = "";
+        statusText.textContent = "Search for a movie to get started.";
+    }
+
+});
+
+// Load more movies
+loadMoreBtn.addEventListener("click", () => {
+    if (!isLoading) {
+        searchMovies(currentPage + 1);
+    }
+});
+
+// Close modal
+closeModal.addEventListener("click", () => {
+    movieModal.hidden = true;
+});
+
+// Close modal by clicking outside
+movieModal.addEventListener("click", (event) => {
+    if (event.target === movieModal) {
+        movieModal.hidden = true;
+    }
+});
+
+// Close modal using Escape key
+document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+        movieModal.hidden = true;
+    }
+});
+
+// Initial message
+showMessage("Search for your favourite movie!");
