@@ -7,7 +7,7 @@ const retryButton = document.getElementById("retry");
 
 let countries = [];
 
-// Fetch countries from API
+// Fetch countries from World Bank API
 async function getCountries() {
 
     statusText.textContent = "Loading countries...";
@@ -15,18 +15,29 @@ async function getCountries() {
     retryButton.hidden = true;
 
     try {
+
         const response = await fetch(
-            "https://restcountries.com/v3.1/all?fields=name,capital,region,population,flags,cca3"
+            "https://api.worldbank.org/v2/country?format=json&per_page=500"
         );
 
         if (!response.ok) {
             throw new Error("Failed to fetch countries");
         }
 
-        countries = await response.json();
+        const data = await response.json();
+
+        if (!data || !Array.isArray(data[1])) {
+            throw new Error("Invalid API response");
+        }
+
+        // Remove regional and income-level aggregates
+        countries = data[1].filter(country =>
+            country.region.id !== "" &&
+            country.capitalCity !== ""
+        );
 
         countries.sort((a, b) =>
-            a.name.common.localeCompare(b.name.common)
+            a.name.localeCompare(b.name)
         );
 
         showCountries();
@@ -34,10 +45,11 @@ async function getCountries() {
     } catch (error) {
 
         statusText.textContent =
-            "Something went wrong! Please check your internet connection.";
+            "Unable to load countries. Please try again.";
 
         retryButton.hidden = false;
-        console.log(error);
+        console.error(error);
+
     }
 }
 
@@ -50,11 +62,15 @@ function showCountries() {
     const filteredCountries = countries.filter(country => {
 
         const matchesSearch =
-            country.name.common.toLowerCase().includes(searchValue);
+            country.name.toLowerCase().includes(searchValue);
+
+        const region = country.region.value;
 
         const matchesRegion =
             selectedRegion === "All" ||
-            country.region === selectedRegion;
+            region.toLowerCase().includes(
+                selectedRegion.toLowerCase()
+            );
 
         return matchesSearch && matchesRegion;
     });
@@ -74,24 +90,24 @@ function showCountries() {
         const card = document.createElement("div");
         card.className = "card";
 
-        const capital = country.capital
-            ? country.capital.join(", ")
-            : "Not available";
-
-        const flag = country.flags?.png || "";
+        const flag = country.iso2Code
+            ? `https://flagcdn.com/w320/${country.iso2Code.toLowerCase()}.png`
+            : "";
 
         card.innerHTML = `
-            <img src="${flag}" alt="Flag of ${country.name.common}">
+            <img src="${flag}" alt="Country flag">
 
             <div class="card-info">
-                <h3>${country.name.common}</h3>
+                <h3>${country.name}</h3>
 
-                <p><b>Capital:</b> ${capital}</p>
+                <p><b>Capital:</b>
+                ${country.capitalCity || "Not available"}</p>
 
-                <p><b>Region:</b> ${country.region}</p>
+                <p><b>Region:</b>
+                ${country.region.value}</p>
 
-                <p><b>Population:</b>
-                ${country.population.toLocaleString("en-IN")}</p>
+                <p><b>Country Code:</b>
+                ${country.id}</p>
             </div>
         `;
 
@@ -102,10 +118,10 @@ function showCountries() {
 // Search countries
 searchInput.addEventListener("input", showCountries);
 
-// Filter by region
+// Filter countries
 regionSelect.addEventListener("change", showCountries);
 
-// Retry if API fails
+// Retry API request
 retryButton.addEventListener("click", getCountries);
 
 // Start application
