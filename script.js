@@ -1,213 +1,150 @@
 
-// =====================================
-// SHOW EXPLORER - TVMAZE API
-// =====================================
-
-// API URL
 const API_URL = "https://api.tvmaze.com";
 
-// Get HTML elements
+// Getting HTML elements
 const searchForm = document.getElementById("searchForm");
-const movieInput = document.getElementById("movieInput");
-const typeFilter = document.getElementById("typeFilter");
+const searchInput = document.getElementById("searchInput");
+const genreFilter = document.getElementById("genreFilter");
 const yearFilter = document.getElementById("yearFilter");
-
 const clearBtn = document.getElementById("clearBtn");
-const movieContainer = document.getElementById("movieContainer");
-const statusText = document.getElementById("status");
+
+const showContainer = document.getElementById("showContainer");
+const status = document.getElementById("status");
 const resultCount = document.getElementById("resultCount");
 
-const movieModal = document.getElementById("movieModal");
-const modalBody = document.getElementById("modalBody");
+const showModal = document.getElementById("showModal");
 const closeModal = document.getElementById("closeModal");
+const modalBody = document.getElementById("modalBody");
 
-// Store API data
 let allShows = [];
-let requestNumber = 0;
 
-// =====================================
-// SEARCH SHOWS USING API
-// =====================================
+// Search shows using API
+async function searchShows(searchTerm) {
 
-async function searchShows() {
-
-    const searchTerm = movieInput.value.trim();
-
-    if (searchTerm === "") {
-        showMessage("Please enter a show name.");
-        return;
-    }
-
-    // Prevent older requests from overwriting newer results
-    const thisRequest = ++requestNumber;
-
-    movieContainer.innerHTML = "";
+    showContainer.innerHTML = "";
     resultCount.textContent = "";
-
-    showMessage("Searching shows...");
+    status.textContent = "Loading shows...";
+    status.className = "status loading";
 
     try {
-
-        // Create API URL
-        const url = `${API_URL}/search/shows?q=${encodeURIComponent(searchTerm)}`;
-
-        // Fetch data
-        const response = await fetch(url);
+        const response = await fetch(
+            `${API_URL}/search/shows?q=${encodeURIComponent(searchTerm)}`
+        );
 
         if (!response.ok) {
-            throw new Error("Unable to connect to the API.");
+            throw new Error("Unable to fetch shows.");
         }
 
-        // Convert response into JSON
         const data = await response.json();
-
-        if (thisRequest !== requestNumber) return;
 
         allShows = data.map(item => item.show);
 
-        // Apply filters
+        status.className = "status";
+
         displayShows();
 
     } catch (error) {
-
-        if (thisRequest !== requestNumber) return;
-
-        showMessage(
-            "Something went wrong. Please check your internet connection."
-        );
+        allShows = [];
+        showContainer.innerHTML = "";
+        resultCount.textContent = "";
+        status.className = "status";
+        status.textContent =
+            "Something went wrong. Please check your internet connection and try again.";
 
         console.error("API Error:", error);
-
     }
 }
 
-// =====================================
-// FILTER AND DISPLAY SHOWS
-// =====================================
-
+// Display shows on webpage
 function displayShows() {
 
-    movieContainer.innerHTML = "";
+    showContainer.innerHTML = "";
 
-    const selectedGenre = typeFilter.value;
+    const selectedGenre = genreFilter.value;
     const selectedYear = yearFilter.value.trim();
 
-    // Filter shows
     const filteredShows = allShows.filter(show => {
 
-        const matchesGenre =
-            selectedGenre === "all" ||
-            show.genres.includes(selectedGenre);
+        const genreMatch =
+            !selectedGenre || show.genres.includes(selectedGenre);
 
-        const releaseYear = show.premiered
+        const showYear = show.premiered
             ? show.premiered.substring(0, 4)
             : "";
 
-        const matchesYear =
-            selectedYear === "" ||
-            releaseYear === selectedYear;
+        const yearMatch =
+            !selectedYear || showYear === selectedYear;
 
-        return matchesGenre && matchesYear;
-
+        return genreMatch && yearMatch;
     });
 
-    // Show result count
     resultCount.textContent =
-        `${filteredShows.length} results found`;
+        `${filteredShows.length} show(s) found`;
 
     if (filteredShows.length === 0) {
-
-        showMessage("No shows found. Try another search or filter.");
+        status.textContent = "No shows found. Try another search or filter.";
         return;
-
     }
 
-    showMessage("");
+    status.textContent = "";
 
-    // Create show cards
     filteredShows.forEach(show => {
 
         const card = document.createElement("div");
-        card.className = "movie-card";
+        card.className = "show-card";
 
-        // Poster
         const poster = document.createElement("img");
-
         poster.src = show.image
             ? show.image.medium
-            : "https://placehold.co/300x450/20212a/ffffff?text=No+Poster";
-
-        poster.alt = show.name + " poster";
+            : "https://placehold.co/300x420?text=No+Image";
+        poster.alt = `${show.name} poster`;
         poster.loading = "lazy";
 
-        // Show information
         const info = document.createElement("div");
-        info.className = "movie-info";
+        info.className = "card-info";
 
         const title = document.createElement("h3");
         title.textContent = show.name;
 
-        const year = document.createElement("p");
-
-        year.textContent = "Year: " +
-            (show.premiered
-                ? show.premiered.substring(0, 4)
-                : "Unknown");
-
         const genre = document.createElement("p");
-
-        genre.textContent = "Genre: " +
-            (show.genres.length
-                ? show.genres.slice(0, 2).join(", ")
-                : "Not available");
+        genre.textContent = show.genres.length
+            ? show.genres.join(", ")
+            : "Genre not available";
 
         const rating = document.createElement("p");
+        rating.className = "rating";
+        rating.textContent = show.rating.average
+            ? `★ ${show.rating.average}/10`
+            : "Rating not available";
 
-        rating.textContent = "Rating: " +
-            (show.rating && show.rating.average !== null
-                ? show.rating.average + "/10"
-                : "Not available");
+        const year = document.createElement("p");
+        year.textContent = show.premiered
+            ? `Year: ${show.premiered.substring(0, 4)}`
+            : "Year: Unknown";
 
-        // Details button
-        const detailsButton = document.createElement("button");
+        const detailsBtn = document.createElement("button");
+        detailsBtn.className = "details-btn";
+        detailsBtn.textContent = "View Details";
 
-        detailsButton.textContent = "View Details";
-
-        detailsButton.addEventListener("click", () => {
+        detailsBtn.addEventListener("click", () => {
             getShowDetails(show.id);
         });
 
-        info.append(
-            title,
-            year,
-            genre,
-            rating,
-            detailsButton
-        );
-
+        info.append(title, genre, rating, year, detailsBtn);
         card.append(poster, info);
 
-        movieContainer.appendChild(card);
-
+        showContainer.appendChild(card);
     });
-
 }
 
-// =====================================
-// FETCH INDIVIDUAL SHOW DETAILS
-// =====================================
-
+// Get complete show details
 async function getShowDetails(id) {
 
-    movieModal.hidden = false;
-
-    modalBody.textContent = "Loading show details...";
+    modalBody.textContent = "Loading details...";
+    showModal.hidden = false;
 
     try {
-
-        const response = await fetch(
-            `${API_URL}/shows/${id}`
-        );
+        const response = await fetch(`${API_URL}/shows/${id}`);
 
         if (!response.ok) {
             throw new Error("Unable to load show details.");
@@ -215,148 +152,106 @@ async function getShowDetails(id) {
 
         const show = await response.json();
 
-        // Create modal elements
-        const details = document.createElement("div");
-        details.className = "modal-details";
+        modalBody.innerHTML = "";
 
-        // Show poster
-        const poster = document.createElement("img");
+        const title = document.createElement("h2");
+        title.id = "modalTitle";
+        title.textContent = show.name;
 
-        poster.src = show.image
-            ? show.image.medium
-            : "https://placehold.co/300x450/20212a/ffffff?text=No+Poster";
+        modalBody.appendChild(title);
 
-        poster.alt = show.name + " poster";
+        if (show.image) {
+            const poster = document.createElement("img");
+            poster.src = show.image.medium;
+            poster.alt = `${show.name} poster`;
+            poster.className = "modal-poster";
+            modalBody.appendChild(poster);
+        }
 
-        // Show information
-        const text = document.createElement("div");
-        text.className = "modal-text";
-
-        const heading = document.createElement("h2");
-
-        heading.textContent = show.name;
-
-        // Remove HTML tags from API summary
-        const summary = show.summary
-            ? show.summary.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim()
-            : "Description not available.";
-
-        const fields = [
-            "Language: " + (show.language || "Unknown"),
-            "Genre: " + (show.genres.join(", ") || "Unknown"),
-            "Status: " + (show.status || "Unknown"),
-            "Premiered: " + (show.premiered || "Unknown"),
-            "Rating: " + (
-                show.rating && show.rating.average !== null
-                    ? show.rating.average + "/10"
-                    : "Not available"
-            ),
-            "Runtime: " + (show.averageRuntime || "Unknown") + " minutes",
-            "Summary: " + summary
+        const details = [
+            `Genres: ${show.genres.join(", ") || "Not available"}`,
+            `Language: ${show.language || "Not available"}`,
+            `Premiered: ${show.premiered || "Not available"}`,
+            `Rating: ${show.rating.average || "Not available"}`,
+            `Status: ${show.status || "Not available"}`,
+            `Network: ${show.network?.name || "Not available"}`
         ];
 
-        text.appendChild(heading);
-
-        fields.forEach(item => {
-
+        details.forEach(detail => {
             const paragraph = document.createElement("p");
-
-            paragraph.textContent = item;
-
-            text.appendChild(paragraph);
-
+            paragraph.textContent = detail;
+            modalBody.appendChild(paragraph);
         });
 
-        details.append(poster, text);
+        const summary = document.createElement("p");
+        summary.textContent = show.summary
+            ? show.summary.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim()
+            : "No description available.";
 
-        modalBody.replaceChildren(details);
+        modalBody.appendChild(summary);
 
     } catch (error) {
-
         modalBody.textContent =
             "Unable to load details. Please try again.";
 
         console.error("Details Error:", error);
-
     }
-
 }
 
-// =====================================
-// DISPLAY MESSAGES
-// =====================================
-
-function showMessage(message) {
-
-    statusText.textContent = message;
-
+// Close modal function
+function closeShowModal() {
+    showModal.hidden = true;
 }
 
-// =====================================
-// EVENT LISTENERS
-// =====================================
-
-// Search button
+// Search form event
 searchForm.addEventListener("submit", function(event) {
 
     event.preventDefault();
 
-    searchShows();
+    const searchTerm = searchInput.value.trim();
 
+    if (searchTerm !== "") {
+        searchShows(searchTerm);
+    }
 });
 
-// Genre filter
-typeFilter.addEventListener("change", displayShows);
+// Genre filter event
+genreFilter.addEventListener("change", displayShows);
 
-// Year filter
+// Year filter event
 yearFilter.addEventListener("input", displayShows);
 
-// Clear filters
+// Clear filters and search
 clearBtn.addEventListener("click", function() {
 
-    typeFilter.value = "all";
+    searchInput.value = "";
+    genreFilter.value = "";
     yearFilter.value = "";
-
-    movieInput.value = "";
 
     allShows = [];
 
-    movieContainer.innerHTML = "";
-
+    showContainer.innerHTML = "";
     resultCount.textContent = "";
+    status.textContent = "Search for a TV show to get started.";
 
-    showMessage("Search for your favourite TV show!");
-
+    closeShowModal();
 });
 
-// Close modal
-closeModal.addEventListener("click", function() {
+// Close using cross button
+closeModal.addEventListener("click", closeShowModal);
 
-    movieModal.hidden = true;
+// Close by clicking outside popup
+showModal.addEventListener("click", function(event) {
 
-});
-
-// Close modal by clicking outside
-movieModal.addEventListener("click", function(event) {
-
-    if (event.target === movieModal) {
-
-        movieModal.hidden = true;
-
+    if (event.target === showModal) {
+        closeShowModal();
     }
-
 });
 
-// Close modal using Escape key
+// Close using Escape key
 document.addEventListener("keydown", function(event) {
 
-    if (event.key === "Escape") {
-
-        movieModal.hidden = true;
-
+    if (event.key === "Escape" && !showModal.hidden) {
+        closeShowModal();
     }
-
 });
-
-// Initial message
-showMessage("Search for your favourite TV show!");
